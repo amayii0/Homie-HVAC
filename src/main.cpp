@@ -7,6 +7,13 @@
  **                  D4 = Power for IRDA LED
  **
  **
+ ** 2017-02-02, RDU: Problems to send float values to Homie custom device over MQTT
+ **                  Sent as 42.60 but echoed as 2.5957243E-6
+ **                  Some feelings that float is not represented the same way between C++ and Java
+ **
+ ** 2017-02-04, RDU: Rollback for pidome-mqttbroker.jar from 2017-01-29 20:49 to 2016-06-10 07:44
+ **                  Server side fix addressed float parameters issue with latest snapshot of PiDome
+ **
  *********************************************************************************************************************/
 #include <Homie.h>
 
@@ -14,7 +21,7 @@
 // Globals
   // Software specifications
     #define FW_NAME    "D1Mini-HVAC"
-    #define FW_VERSION "0.17.2.1"
+    #define FW_VERSION "0.17.2.4"
 
   // OLED consts/vars
     // TODO
@@ -174,17 +181,10 @@ void loopHandler() {
         printOLED_Humi(humidity);
         display.display();
 
-      // Publish to MQTT : We use floats rounded to ints and passed as strings
-      //                   > Yeah this is rock'n'roll!
-      //                   > See http://forum.pidome.org/viewtopic.php?id=329
-        // Convert to integers
-        // > See http://forum.arduino.cc/index.php?topic=44622.0
-          int iTemp = temperature + 0.5;
-          int iHumi = humidity + 0.5;
-        // Actual publish
-          Homie.getLogger() << F("\tPublish to MQTT . . .") << endl;
-          temperatureNode.setProperty("degrees").send(String(temperature).c_str());
-          humidityNode.setProperty("relative").send(String(humidity).c_str());
+      // Actual publish
+        Homie.getLogger() << F("\tPublish to MQTT . . .") << endl;
+        temperatureNode.setProperty("degrees").send(String(temperature));
+        humidityNode.setProperty("relative").send(String(humidity));
     }
     lastMeasureSent = millis();
   }
